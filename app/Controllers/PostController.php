@@ -245,28 +245,52 @@ class PostController
         header('Location: /blog-app/public/dashboard');
         exit;
     }
-
     /**
-     * Silme: dashboard’dan POST ile gelir (daha güvenli)
-     */
+     * Post silme işlemi
+     */     
     public function delete()
-    {
-        if (!isset($_SESSION['user'])) {
-            header('Location: /blog-app/public/login');
-            exit;
-        }
+{
+    // 1) Login kontrolü
+    if (!isset($_SESSION['user'])) {
+        header('Location: /blog-app/public/login');
+        exit;
+    }
 
-        $userId = (int) $_SESSION['user']['id'];
-        $postId = (int) ($_POST['id'] ?? 0);
+    $userId = (int) $_SESSION['user']['id'];
+    $postId = (int) ($_POST['id'] ?? 0);
 
-        if ($postId > 0) {
-            $this->posts->deleteByIdAndUser($postId, $userId);
-            $_SESSION['flash'] = 'Post silindi.';
-        }
-
+    // 2) Geçersiz istek
+    if ($postId <= 0) {
+        $_SESSION['errors'] = ['Geçersiz post.'];
         header('Location: /blog-app/public/dashboard');
         exit;
     }
+
+    // 3) Postu DB'den çek (var mı + sahibi kim?)
+    $post = $this->posts->findById($postId);
+
+    if (!$post) {
+        $_SESSION['errors'] = ['Post bulunamadı.'];
+        header('Location: /blog-app/public/dashboard');
+        exit;
+    }
+
+    // 4) Yetki kontrolü (asıl güvenlik)
+    if ((int)$post['user_id'] !== $userId) {
+        $_SESSION['errors'] = ['Bu postu silme yetkin yok.'];
+        header('Location: /blog-app/public/dashboard');
+        exit;
+    }
+
+    // 5) Silme işlemi (artık güvenli)
+    $this->posts->deleteById($postId);
+
+    $_SESSION['flash'] = 'Post silindi.';
+    header('Location: /blog-app/public/dashboard');
+    exit;
+}
+
+
 
 
     /**

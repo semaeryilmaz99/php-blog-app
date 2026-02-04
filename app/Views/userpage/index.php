@@ -156,6 +156,22 @@ $avatar   = $user['avatar_path'] ?? null;
 
         </section>
 
+        <section class="other-users">
+            <h3>Other users</h3>
+
+            <?php foreach (($otherUsers ?? []) as $u): ?>
+                <div class="other-user">
+                    <strong><?= htmlspecialchars($u['username'], ENT_QUOTES, 'UTF-8') ?></strong>
+
+                    <form method="POST" action="/blog-app/public/follows/toggle">
+                        <input type="hidden" name="user_id" value="<?= (int)$u['id'] ?>">
+                        <button type="submit">Follow / Unfollow</button>
+                    </form>
+                </div>
+            <?php endforeach; ?>
+        </section>
+
+
     </div>
 
 </body>

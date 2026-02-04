@@ -30,6 +30,8 @@ class UserController
         // Session'dan login olan kullanıcı id'sini alıyoruz
         $userId = (int) $_SESSION['user']['id'];
 
+        $otherUsers = $this->users->listOtherUsers($userId);
+
         // Kullanıcının güncel bilgilerini DB'den çekiyoruz (session eski kalabilir)
         $user = $this->users->findById($userId);
 

@@ -115,6 +115,39 @@ if ($method === 'POST' && $path === '/userpage/delete-post') {
     exit;
 }
 
+// LIKE ROUTES
+$like = new \App\Controllers\LikeController();
+if ($method === 'POST' && $path === '/likes/toggle') {
+    $like->toggle();
+    exit;
+}
+
+// FOLLOW ROUTES
+$follow = new \App\Controllers\FollowController();
+if ($method === 'POST' && $path === '/follows/toggle') {
+    $follow->toggle();
+    exit;
+}
+
+// USERS (list + show)
+$usersController = new \App\Controllers\UsersController();
+
+if ($method === 'GET' && $path === '/users') {
+    $usersController->index();
+    exit;
+}
+
+if ($method === 'GET' && $path === '/users/show') {
+    $usersController->show();
+    exit;
+}
+
+$follow = new \App\Controllers\FollowController();
+if ($method === 'POST' && $path === '/follows/toggle') {
+    $follow->toggle();
+    exit;
+}
+
 // Logout
 if ($method === 'POST' && $path === '/logout') {
     $_SESSION = [];

@@ -137,4 +137,18 @@ class UserRepository
 
         return (bool) $stmt->fetch();
     }
+
+    public function listOtherUsers(int $meId, int $limit = 20): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT id, username, avatar_path
+         FROM users
+         WHERE id <> :me
+         ORDER BY id DESC
+         LIMIT {$limit}"
+        );
+
+        $stmt->execute(['me' => $meId]);
+        return $stmt->fetchAll();
+    }
 }

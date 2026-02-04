@@ -1,4 +1,5 @@
 <?php
+$viewerId = (int)($_SESSION['user']['id'] ?? 0);
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
@@ -41,26 +42,26 @@ $q = trim($_GET['q'] ?? '');
   <?php endif; ?>
 
   <!-- SIDEBAR (iskelet) -->
-<aside class="sidebar" id="sidebar" aria-hidden="true">
-  <nav class="sidebar__menu" aria-label="Sidebar menu">
-    <a class="sidebar__item" href="/blog-app/public/dashboard">dashboard</a>
-    <a class="sidebar__item" href="/blog-app/public/posts/create">create post</a>
-    <a class="sidebar__item" href="/blog-app/public/userpage">user page</a>
-  </nav>
+  <aside class="sidebar" id="sidebar" aria-hidden="true">
+    <nav class="sidebar__menu" aria-label="Sidebar menu">
+      <a class="sidebar__item" href="/blog-app/public/dashboard">dashboard</a>
+      <a class="sidebar__item" href="/blog-app/public/posts/create">create post</a>
+      <a class="sidebar__item" href="/blog-app/public/userpage">user page</a>
+    </nav>
 
-  <form class="sidebar__logout" method="POST" action="/blog-app/public/logout">
-    <button type="submit">logout</button>
-  </form>
-</aside>
+    <form class="sidebar__logout" method="POST" action="/blog-app/public/logout">
+      <button type="submit">logout</button>
+    </form>
+  </aside>
 
-<!-- (opsiyonel) Arka plan overlay -->
-<div class="sidebar-overlay" id="sidebarOverlay" hidden></div>
+  <!-- (opsiyonel) Arka plan overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" hidden></div>
 
   <!-- 1) TOP BAR / NAVBAR -->
   <header class="topbar">
     <button class="topbar__hamburger" id="hamburger" type="button" aria-label="Menu" aria-expanded="false">
-  <span></span><span></span><span></span>
-</button>
+      <span></span><span></span><span></span>
+    </button>
 
 
     <nav class="topbar__nav">
@@ -122,22 +123,43 @@ $q = trim($_GET['q'] ?? '');
             <!-- Sağdaki action ikonları -->
             <div class="post-card__actions">
 
-              <!-- Delete: POST -->
+              <?php if ((int)$p['user_id'] === $viewerId): ?>
+                <!-- ✅ Delete: sadece post sahibi -->
+                <form method="POST"
+                  action="/blog-app/public/posts/delete"
+                  onsubmit="return confirm('Silinsin mi?')">
+                  <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                  <button class="icon-btn" type="submit" aria-label="Delete">
+                    🗑
+                  </button>
+                </form>
+
+                <!-- ✅ Edit: sadece post sahibi -->
+                <a class="icon-btn"
+                  href="/blog-app/public/posts/edit?id=<?= (int)$p['id'] ?>"
+                  aria-label="Edit">
+                  ✏️
+                </a>
+              <?php endif; ?>
+
+              <!-- ❤️ Like: herkes görebilir -->
               <form method="POST"
-                action="/blog-app/public/posts/delete"
-                onsubmit="return confirm('Silinsin mi?')">
-                <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
-                <button class="icon-btn" type="submit" aria-label="Delete">
-                  🗑
+                action="/blog-app/public/likes/toggle">
+                <input type="hidden" name="post_id" value="<?= (int)$p['id'] ?>">
+
+                <?php
+                $isLiked   = !empty($p['is_liked']);
+                $likeCount = (int) ($p['like_count'] ?? 0);
+                ?>
+
+                <button class="icon-btn" type="submit" aria-label="Like">
+                  <?= $isLiked ? '❤️' : '🤍' ?>
+                  <span>(<?= $likeCount ?>)</span>
                 </button>
               </form>
 
-              <!-- Edit -->
-              <a class="icon-btn" href="/blog-app/public/posts/edit?id=<?= (int)$p['id'] ?>" aria-label="Edit">
-                ✏️
-              </a>
-
             </div>
+
           </div>
 
           <!-- Kart görsel alanı -->

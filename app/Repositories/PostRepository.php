@@ -130,4 +130,126 @@ class PostRepository
 
         return $stmt->fetchAll();
     }
+
+    public function listByUserWithLikes(int $userId, int $viewerId): array
+    {
+        // userId: postların sahibi
+        // viewerId: dashboardu görüntüleyen user (genelde aynı ama ileride farklı olabilir)
+
+        $stmt = $this->db->prepare(
+            "SELECT 
+            p.*,
+
+            -- Bu postun toplam like sayısı
+            (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+
+            -- Bu viewer bu postu beğenmiş mi? (1/0)
+            EXISTS(
+                SELECT 1 FROM post_likes pl2 
+                WHERE pl2.post_id = p.id AND pl2.user_id = :viewer_id
+            ) AS is_liked
+
+         FROM posts p
+         WHERE p.user_id = :user_id
+         ORDER BY p.created_at DESC"
+        );
+
+        $stmt->execute([
+            'user_id' => $userId,
+            'viewer_id' => $viewerId,
+        ]);
+
+        return $stmt->fetchAll();
+    }
+
+    public function listAll(string $q = ''): array
+    {
+        $hasQuery = trim($q) !== '';
+        $like = '%' . $q . '%';
+
+        $sql = "
+        SELECT
+            p.id, p.user_id, p.title, p.content, p.image_path, p.created_at,
+            u.username, u.avatar_path
+        FROM posts p
+        JOIN users u ON u.id = p.user_id
+        WHERE 1=1
+    ";
+
+        if ($hasQuery) {
+            $sql .= " AND (p.title LIKE :q1 OR p.content LIKE :q2)";
+        }
+
+        $sql .= " ORDER BY p.created_at DESC";
+
+        $stmt = $this->db->prepare($sql);
+
+        $params = [];
+        if ($hasQuery) {
+            $params['q1'] = $like;
+            $params['q2'] = $like;
+        }
+
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    public function listAllWithLikes(int $viewerId, string $q = ''): array
+    {
+        $hasQuery = trim($q) !== '';
+        $like = '%' . $q . '%';
+
+        $sql = "
+        SELECT
+            p.id, p.user_id, p.title, p.content, p.image_path, p.created_at,
+            u.username, u.avatar_path,
+
+            (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+
+            EXISTS(
+                SELECT 1 FROM post_likes pl2
+                WHERE pl2.post_id = p.id AND pl2.user_id = :viewer_id
+            ) AS is_liked
+
+        FROM posts p
+        JOIN users u ON u.id = p.user_id
+        WHERE 1=1
+    ";
+
+        if ($hasQuery) {
+            $sql .= " AND (p.title LIKE :q1 OR p.content LIKE :q2)";
+        }
+
+        $sql .= " ORDER BY p.created_at DESC";
+
+        $stmt = $this->db->prepare($sql);
+
+        $params = ['viewer_id' => $viewerId];
+
+        if ($hasQuery) {
+            $params['q1'] = $like;
+            $params['q2'] = $like;
+        }
+
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+    public function findById(int $id): ?array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT id, user_id FROM posts WHERE id = :id LIMIT 1"
+        );
+        $stmt->execute(['id' => $id]);
+        $post = $stmt->fetch();
+        return $post ?: null;
+    }
+
+    public function deleteById(int $id): void
+    {
+        $stmt = $this->db->prepare(
+            "DELETE FROM posts WHERE id = :id"
+        );
+        $stmt->execute(['id' => $id]);
+    }
 }

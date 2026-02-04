@@ -4,25 +4,29 @@ namespace App\Core;
 
 use Predis\Client;
 
-final class RedisClient
+class RedisClient
 {
     private static ?Client $client = null;
 
     public static function get(): Client
     {
-        if (self::$client) {
-            return self::$client;
+        if (self::$client === null) {
+            $host = $_ENV['REDIS_HOST'] ?? '127.0.0.1';
+            $port = (int) ($_ENV['REDIS_PORT'] ?? 6379);
+            $password = $_ENV['REDIS_PASSWORD'] ?? null;
+
+            $config = [
+                'scheme' => 'tcp',
+                'host' => $host,
+                'port' => $port,
+            ];
+
+            if (!empty($password)) {
+                $config['password'] = $password;
+            }
+
+            self::$client = new Client($config);
         }
-
-        $config = require __DIR__ . '/../../config/config.php';
-        $r = $config['redis'];
-
-        self::$client = new Client([
-            'scheme' => 'tcp',
-            'host' => $r['host'],
-            'port' => (int) $r['port'],
-            'password' => ($r['password'] && $r['password'] !== 'null') ? $r['password'] : null,
-        ]);
 
         return self::$client;
     }
