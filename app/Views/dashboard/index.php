@@ -66,8 +66,8 @@ $q = trim($_GET['q'] ?? '');
 
     <nav class="topbar__nav">
       <a class="topbar__btn is-active" href="/blog-app/public/dashboard">dashboard</a>
-      <a class="topbar__btn" href="/blog-app/public/posts/create">create post</a>
-      <a class="topbar__btn" href="#" aria-disabled="true" onclick="return false;">&nbsp;</a>
+      <a class="topbar__btn" href="/blog-app/public/feed">feed</a>
+
     </nav>
 
     <?php
@@ -110,6 +110,9 @@ $q = trim($_GET['q'] ?? '');
 
   <!-- 3) POSTS GRID -->
   <main class="content">
+
+    <p style="text-align: center;">Tüm kullanıcıların paylaşımlarını gör</p>
+    <hr>
     <div class="posts-grid">
       <?php foreach ($posts as $p): ?>
         <article class="post-card">

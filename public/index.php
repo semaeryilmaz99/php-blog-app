@@ -7,6 +7,7 @@ use App\Controllers\AuthController;
 use App\Controllers\PostController;
 use App\Controllers\DashboardController;
 use App\Controllers\UserController;
+use App\Controllers\FeedController;
 
 $dotenv = Dotenv::createImmutable(dirname(__DIR__));
 $dotenv->load();
@@ -91,6 +92,17 @@ if ($method === 'GET' && $path === '/dashboard') {
     $dashboard->index();
     exit;
 }
+
+
+
+// FEED
+$feed = new FeedController();
+
+if ($method === 'GET' && $path === '/feed') {
+    $feed->index();
+    exit;
+}
+
 
 // USERPAGE ROUTES
 

@@ -94,7 +94,7 @@ class UserRepository
         );
 
         $stmt->execute([
-            'username' > $username,
+            'username' => $username,
             'bio' => $bio === '' ? null : $bio,
             'id' => $id,
         ]);
@@ -150,5 +150,21 @@ class UserRepository
 
         $stmt->execute(['me' => $meId]);
         return $stmt->fetchAll();
+    }
+
+    public function usernameExistsForOtherUser(int $userId, string $username): bool
+    {
+        $stmt = $this->db->prepare(
+            "SELECT id FROM users 
+         WHERE username = :username AND id != :id
+         LIMIT 1"
+        );
+
+        $stmt->execute([
+            'username' => $username,
+            'id' => $userId,
+        ]);
+
+        return (bool) $stmt->fetch();
     }
 }

@@ -90,6 +90,17 @@ class UserController
             $this->redirect('/blog-app/public/userpage');
         }
 
+        // Username başka kullanıcıya ait mi?
+        if ($this->users->usernameExistsForOtherUser($userId, $username)) {
+            $_SESSION['errors'] = ['Bu username başka bir kullanıcı tarafından kullanılıyor.'];
+            $_SESSION['old'] = [
+                'username' => $username,
+                'bio' => $bio,
+            ];
+            $this->redirect('/blog-app/public/userpage');
+        }
+
+
         // DB update (Repository sadece SQL yapar)
         $this->users->updateProfile($userId, $username, $bio);
 
