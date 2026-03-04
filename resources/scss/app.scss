@@ -1,5 +1,5 @@
 /* abstracts */
-@use "abstracts/variables";
+@use "abstracts/variables"; 
 @use "abstracts/mixins";
 
 /* base */
@@ -12,6 +12,7 @@
 @use "components/inputs";
 @use "components/cards";
 @use "components/alerts";
+@use "components/modal";
 
 /* layout */
 @use "layout/auth";

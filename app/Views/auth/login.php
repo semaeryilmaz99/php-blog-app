@@ -1,7 +1,7 @@
 <?php
-$flash = $_SESSION['flash'] ?? null;
+$flash  = $_SESSION['flash'] ?? null;
 $errors = $_SESSION['errors'] ?? [];
-$old = $_SESSION['old'] ?? [];
+$old    = $_SESSION['old'] ?? [];
 unset($_SESSION['flash'], $_SESSION['errors'], $_SESSION['old']);
 ?>
 <!doctype html>
@@ -9,7 +9,7 @@ unset($_SESSION['flash'], $_SESSION['errors'], $_SESSION['old']);
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="/blog-app/public/assets/css/app.css">
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app.css">
   <title>Login</title>
 </head>
 <body class="auth-page">
@@ -28,22 +28,37 @@ unset($_SESSION['flash'], $_SESSION['errors'], $_SESSION['old']);
     </ul>
   <?php endif; ?>
 
-  <form class="auth-form" method="POST" action="/blog-app/public/login">
+  <form class="auth-form" method="POST" action="<?= BASE_URL ?>/login">
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+
     <div class="auth-field">
-      <label class="auth-pill" for="identity">Username/Emaıl</label>
-      <input id="identity" class="auth-input" name="identity" value="<?= htmlspecialchars($old['identity'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+      <label class="auth-pill" for="identity">Username / Email</label>
+      <input
+        id="identity"
+        class="auth-input"
+        type="text"
+        name="identity"
+        value="<?= htmlspecialchars($old['identity'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+        autocomplete="username"
+        required>
     </div>
 
     <div class="auth-field">
       <label class="auth-pill" for="password">Password</label>
-      <input id="password" class="auth-input" type="password" name="password">
+      <input
+        id="password"
+        class="auth-input"
+        type="password"
+        name="password"
+        autocomplete="current-password"
+        required>
     </div>
 
-    <button class="auth-button" type="submit">Logın</button>
+    <button class="auth-button" type="submit">Login</button>
   </form>
 
   <p class="auth-alt">
-    Need an account? <a href="/blog-app/public/signup">Sıgn up</a>
+    Need an account? <a href="<?= BASE_URL ?>/signup">Sign up</a>
   </p>
 </div>
 </body>

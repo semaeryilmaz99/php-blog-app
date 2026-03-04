@@ -2,33 +2,28 @@
 
 namespace App\Controllers;
 
+use App\Core\Controller;
 use App\Repositories\FeedRepository;
 
-class FeedController
+class FeedController extends Controller
 {
     private FeedRepository $feed;
 
     public function __construct()
     {
-        // Feed’e özel repository
         $this->feed = new FeedRepository();
     }
 
     public function index(): void
     {
-        // Giriş kontrolü
-        if (!isset($_SESSION['user'])) {
-            header('Location: /blog-app/public/login');
-            exit;
-        }
+        $this->requireLogin();
 
-        // Login olan kullanıcı
         $viewerId = (int) $_SESSION['user']['id'];
+        $posts    = $this->feed->getFeedPosts($viewerId);
 
-        // Feed = takip edilen kullanıcıların postları
-        $posts = $this->feed->getFeedPosts($viewerId);
+        $userRepository = new \App\Repositories\UserRepository();
+        $otherUsers     = $userRepository->listOtherUsers($viewerId);
 
-        // View
-        require __DIR__ . '/../Views/feed/index.php';
+    $this->render('feed/index', compact('posts', 'otherUsers'));
     }
 }

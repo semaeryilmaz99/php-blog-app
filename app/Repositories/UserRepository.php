@@ -139,25 +139,34 @@ class UserRepository
     }
 
     public function listOtherUsers(int $meId, int $limit = 20): array
-    {
-        $stmt = $this->db->prepare(
-            "SELECT id, username, avatar_path
-         FROM users
-         WHERE id <> :me
-         ORDER BY id DESC
-         LIMIT {$limit}"
-        );
+{
+    $limit = max(1, min((int) $limit, 100));
 
-        $stmt->execute(['me' => $meId]);
-        return $stmt->fetchAll();
-    }
+    $stmt = $this->db->prepare(
+        "SELECT 
+            u.id,
+            u.username,
+            u.avatar_path,
+            EXISTS(
+                SELECT 1 FROM follows f
+                WHERE f.follower_id = :me AND f.following_id = u.id
+            ) AS is_following
+        FROM users u
+        WHERE u.id <> :me2
+        ORDER BY u.created_at DESC
+        LIMIT " . $limit
+    );
+
+    $stmt->execute(['me' => $meId, 'me2' => $meId]);
+    return $stmt->fetchAll();
+}
 
     public function usernameExistsForOtherUser(int $userId, string $username): bool
     {
         $stmt = $this->db->prepare(
             "SELECT id FROM users 
-         WHERE username = :username AND id != :id
-         LIMIT 1"
+        WHERE username = :username AND id != :id
+        LIMIT 1"
         );
 
         $stmt->execute([

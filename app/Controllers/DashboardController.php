@@ -2,10 +2,11 @@
 
 namespace App\Controllers;
 
-use App\Repositories\PostRepository;
+use App\Core\Controller;
 use App\Core\RedisClient;
+use App\Repositories\PostRepository;
 
-class DashboardController
+class DashboardController extends Controller
 {
     private PostRepository $posts;
 
@@ -14,58 +15,50 @@ class DashboardController
         $this->posts = new PostRepository();
     }
 
-    public function index()
+    public function index(): void
     {
-        if (!isset($_SESSION['user'])) {
-            header('Location: /blog-app/public/login');
-            exit;
-        }
+        $this->requireLogin();
 
-        // Dashboard artık global ama "ben beğendim mi" için viewerId lazım
         $viewerId = (int) $_SESSION['user']['id'];
+        $q        = trim($_GET['q'] ?? '');
 
-        // 🔍 Arama kelimesi (GET ?q=...)
-        $q = trim($_GET['q'] ?? '');
-
-        // ✅ Global cache key:
-        // - arama yoksa tek key
-        // - arama varsa q'ya göre farklı key
+        // Viewer bazlı cache key — her kullanıcı kendi like durumunu görür
         $cacheKey = ($q === '')
-            ? "dashboard:global:v1"
-            : "dashboard:global:q:" . sha1($q) . ":v1";
+            ? "dashboard:user:{$viewerId}:v1"
+            : "dashboard:user:{$viewerId}:q:" . sha1($q) . ":v1";
 
         $ttlSeconds = 60;
+        $posts      = null;
+        $redis      = null;
 
-        $posts = null;
-
-        // 1) Redis'ten okumayı dene
         try {
-            $redis = RedisClient::get();
+            $redis  = RedisClient::get();
             $cached = $redis->get($cacheKey);
 
             if ($cached) {
                 $decoded = json_decode($cached, true);
                 if (is_array($decoded)) {
-                    $posts = $decoded; // ✅ cache HIT
+                    $posts = $decoded;
                 }
             }
         } catch (\Throwable $e) {
-            $posts = null; // Redis yoksa DB ile devam
+            $posts = null;
         }
 
-        // 2) Cache MISS: DB'den çek + Redis'e yaz
         if (!is_array($posts)) {
-            // ✅ Global postlar + like bilgisi (viewer = login user)
             $posts = $this->posts->listAllWithLikes($viewerId, $q);
 
             try {
                 $redis = $redis ?? RedisClient::get();
                 $redis->setex($cacheKey, $ttlSeconds, json_encode($posts, JSON_UNESCAPED_UNICODE));
             } catch (\Throwable $e) {
-                // Redis'e yazamasak da sorun değil
+                // Redis yoksa devam et
             }
         }
 
-        require __DIR__ . '/../Views/dashboard/index.php';
+        $userRepository = new \App\Repositories\UserRepository();
+        $otherUsers     = $userRepository->listOtherUsers($viewerId);  
+
+        $this->render('dashboard/index', compact('posts', 'q', 'otherUsers'));
     }
 }

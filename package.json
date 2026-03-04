@@ -4,7 +4,7 @@
   "main": "watcher.node",
   "repository": {
     "type": "git",
-    "url": "https://github.com/parcel-bundler/watcher.git"
+    "url": "git+https://github.com/parcel-bundler/watcher.git"
   },
   "description": "A native C++ Node module for querying and subscribing to filesystem events. Used by Parcel 2.",
   "license": "MIT",
@@ -26,5 +26,20 @@
   ],
   "cpu": [
     "x64"
-  ]
+  ],
+  "devDependencies": {
+    "sass": "^1.80.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "scss": "sass resources/scss/app.scss public/assets/css/app.css --style=compressed",
+    "scss:watch": "sass resources/scss/app.scss public/assets/css/app.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/parcel-bundler/watcher/issues"
+  },
+  "homepage": "https://github.com/parcel-bundler/watcher#readme"
+  
 }

@@ -1,3 +1,4 @@
+@use "../abstracts/variables" as v;
 .dashboard {
   background: #f8e9e3;
 
@@ -279,6 +280,78 @@
     font-size: 46px;
     color: #5b5353;
     box-shadow: 0 16px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  // Mevcut .fab stilinin hemen altına ekle, @media'dan önce:
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 300;
+    width: 260px;
+    height: 100vh;
+    background: v.$light-primary;
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    padding: 40px 24px 32px;
+    gap: 32px;
+    transform: translateX(-100%);
+    transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.is-open {
+      transform: translateX(0);
+    }
+  }
+
+  .sidebar__menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .sidebar__item {
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: v.$dark-primary;
+    font-size: 13px;
+    text-transform: lowercase;
+    letter-spacing: 0.4px;
+    transition: background 150ms ease;
+
+    &:hover {
+      background: v.$dark-pink;
+    }
+  }
+
+  .sidebar__logout {
+    margin-top: auto;
+
+    button {
+      width: 100%;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 999px;
+      background: v.$light-grey;
+      font-size: 13px;
+      text-transform: lowercase;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      transition: background 150ms ease;
+
+      &:hover {
+        background: v.$dark-primary;
+      }
+    }
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 299;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(2px);
   }
 
   @media (max-width: 1100px) {

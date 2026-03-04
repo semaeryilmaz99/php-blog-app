@@ -8,170 +8,108 @@ use App\Controllers\PostController;
 use App\Controllers\DashboardController;
 use App\Controllers\UserController;
 use App\Controllers\FeedController;
+use App\Controllers\LikeController;
+use App\Controllers\FollowController;
+use App\Controllers\UsersController;
 
+// .env yükle
 $dotenv = Dotenv::createImmutable(dirname(__DIR__));
 $dotenv->load();
 
+// Config yükle ve sabitleri tanımla
+$config = require __DIR__ . '/../config/config.php';
+
+define('BASE_URL', $config['app']['base_path']);
+define('APP_DEBUG', $config['app']['debug']);
+
+// Debug modu
+if (APP_DEBUG) {
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', 0);
+    error_reporting(0);
+}
+
+// Session başlat
 session_start();
 
+// CSRF token üret (session başlangıcında bir kez)
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Path çözümle
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$base = '/blog-app/public'; // Projenin public yolu (sende bu şekilde)
+$base = BASE_URL;
 $path = str_starts_with($path, $base) ? substr($path, strlen($base)) : $path;
-$path = $path === '' ? '/' : $path;
+$path = ($path === '' || $path === false) ? '/' : $path;
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-$auth = new AuthController();
+// ─── ROTALAR ────────────────────────────────────────────
 
-// ROOT: /blog-app/public/ açılınca nereye gitsin?
+// ROOT
 if ($method === 'GET' && $path === '/') {
-    header('Location: /blog-app/public/login');
+    header('Location: ' . BASE_URL . '/login');
     exit;
 }
 
-if ($method === 'GET' && $path === '/signup') {
-    $auth->showSignup();
-    exit;
-}
+// AUTH
+if ($method === 'GET'  && $path === '/signup') { (new AuthController())->showSignup(); exit; }
+if ($method === 'POST' && $path === '/signup') { (new AuthController())->signup();     exit; }
+if ($method === 'GET'  && $path === '/login')  { (new AuthController())->showLogin();  exit; }
+if ($method === 'POST' && $path === '/login')  { (new AuthController())->login();      exit; }
 
-if ($method === 'POST' && $path === '/signup') {
-    $auth->signup();
-    exit;
-}
-
-if ($method === 'GET' && $path === '/login') {
-    $auth->showLogin();
-    exit;
-}
-
-if ($method === 'POST' && $path === '/login') {
-    $auth->login();
-    exit;
-}
-
-// CREATE POST
-
-$post = new PostController();
-
-// create post sayfası
-if ($method === 'GET' && $path === '/posts/create') {
-    $post->create();
-    exit;
-}
-
-// post kaydetme
-if ($method === 'POST' && $path === '/posts/store') {
-    $post->store();
-    exit;
-}
-
-// Edit sayfası
-if ($method === 'GET' && $path === '/posts/edit') {
-    $post->edit();
-    exit;
-}
-
-// Update
-if ($method === 'POST' && $path === '/posts/update') {
-    $post->update();
-    exit;
-}
-
-// Delete (POST)
-if ($method === 'POST' && $path === '/posts/delete') {
-    $post->delete();
-    exit;
-}
-
-
-// DASHBOARD 
-
-$dashboard = new DashboardController();
-
-if ($method === 'GET' && $path === '/dashboard') {
-    $dashboard->index();
-    exit;
-}
-
-
-
-// FEED
-$feed = new FeedController();
-
-if ($method === 'GET' && $path === '/feed') {
-    $feed->index();
-    exit;
-}
-
-
-// USERPAGE ROUTES
-
-$user = new UserController();
-if ($method === 'GET' && $path === '/userpage') {
-    $user->show();
-    exit;
-}
-
-if ($method === 'POST' && $path === '/userpage/update-profile') {
-    $user->updateProfile();
-    exit;
-}
-
-if ($method === 'POST' && $path === '/userpage/update-avatar') {
-    $user->updateAvatar();
-    exit();
-}
-
-if ($method === 'POST' && $path === '/userpage/delete-post') {
-    $user->deletePost();
-    exit;
-}
-
-// LIKE ROUTES
-$like = new \App\Controllers\LikeController();
-if ($method === 'POST' && $path === '/likes/toggle') {
-    $like->toggle();
-    exit;
-}
-
-// FOLLOW ROUTES
-$follow = new \App\Controllers\FollowController();
-if ($method === 'POST' && $path === '/follows/toggle') {
-    $follow->toggle();
-    exit;
-}
-
-// USERS (list + show)
-$usersController = new \App\Controllers\UsersController();
-
-if ($method === 'GET' && $path === '/users') {
-    $usersController->index();
-    exit;
-}
-
-if ($method === 'GET' && $path === '/users/show') {
-    $usersController->show();
-    exit;
-}
-
-$follow = new \App\Controllers\FollowController();
-if ($method === 'POST' && $path === '/follows/toggle') {
-    $follow->toggle();
-    exit;
-}
-
-// Logout
+// LOGOUT
 if ($method === 'POST' && $path === '/logout') {
+    session_regenerate_id(true);
     $_SESSION = [];
     if (ini_get('session.use_cookies')) {
         $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+        setcookie(
+            session_name(), '',
+            time() - 42000,
+            $params['path'],
+            $params['domain'],
+            $params['secure'],
+            $params['httponly']
+        );
     }
     session_destroy();
-
-    header('Location: /blog-app/public/login');
+    header('Location: ' . BASE_URL . '/login');
     exit;
 }
 
+// POSTS
+if ($method === 'GET'  && $path === '/posts/create')  { (new PostController())->create(); exit; }
+if ($method === 'POST' && $path === '/posts/store')   { (new PostController())->store();  exit; }
+if ($method === 'GET'  && $path === '/posts/edit')    { (new PostController())->edit();   exit; }
+if ($method === 'POST' && $path === '/posts/update')  { (new PostController())->update(); exit; }
+if ($method === 'POST' && $path === '/posts/delete')  { (new PostController())->delete(); exit; }
+
+// DASHBOARD
+if ($method === 'GET' && $path === '/dashboard') { (new DashboardController())->index(); exit; }
+
+// FEED
+if ($method === 'GET' && $path === '/feed') { (new FeedController())->index(); exit; }
+
+// USERPAGE
+if ($method === 'GET'  && $path === '/userpage')                { (new UserController())->show();          exit; }
+if ($method === 'POST' && $path === '/userpage/update-profile') { (new UserController())->updateProfile(); exit; }
+if ($method === 'POST' && $path === '/userpage/update-avatar')  { (new UserController())->updateAvatar();  exit; }
+if ($method === 'POST' && $path === '/userpage/delete-post')    { (new UserController())->deletePost();    exit; }
+
+// LIKES
+if ($method === 'POST' && $path === '/likes/toggle') { (new LikeController())->toggle(); exit; }
+
+// FOLLOWS
+if ($method === 'POST' && $path === '/follows/toggle') { (new FollowController())->toggle(); exit; }
+
+// USERS
+if ($method === 'GET' && $path === '/users')      { (new UsersController())->index(); exit; }
+if ($method === 'GET' && $path === '/users/show') { (new UsersController())->show();  exit; }
+
+// 404
 http_response_code(404);
-echo "404 - Not Found";
+require __DIR__ . '/../app/Views/errors/404.php';

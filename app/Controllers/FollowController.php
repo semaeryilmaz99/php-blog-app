@@ -2,9 +2,10 @@
 
 namespace App\Controllers;
 
+use App\Core\Controller;
 use App\Repositories\FollowRepository;
 
-class FollowController
+class FollowController extends Controller
 {
     private FollowRepository $follows;
 
@@ -13,52 +14,34 @@ class FollowController
         $this->follows = new FollowRepository();
     }
 
-    private function requireLogin(): void
-    {
-        if (!isset($_SESSION['user'])) {
-            header('Location: /blog-app/public/login');
-            exit;
-        }
-    }
-
-    private function redirectBack(): void
-    {
-        $to = $_SERVER['HTTP_REFERER'] ?? '/blog-app/public/userpage';
-        header('Location: ' . $to);
-        exit;
-    }
-
-    /**
-     * POST /follows/toggle
-     * - Eğer takip ediyorsam: unfollow
-     * - Etmiyorsam: follow
-     */
     public function toggle(): void
     {
         $this->requireLogin();
+        $this->verifyCsrf();
 
-        $me = (int) $_SESSION['user']['id'];
+        $me           = (int) $_SESSION['user']['id'];
         $targetUserId = (int) ($_POST['user_id'] ?? 0);
 
         if ($targetUserId <= 0) {
-            $_SESSION['errors'] = ['Geçersiz kullanıcı.'];
-            $this->redirectBack();
+            $this->setErrors(['Geçersiz kullanıcı.']);
+            $this->redirectBack('/dashboard');
+            return;
         }
 
-        // Kendini takip etmeyi engelle (mantıklı kural)
         if ($targetUserId === $me) {
-            $_SESSION['errors'] = ['Kendini takip edemezsin.'];
-            $this->redirectBack();
+            $this->setErrors(['Kendini takip edemezsin.']);
+            $this->redirectBack('/dashboard');
+            return;
         }
 
         if ($this->follows->isFollowing($me, $targetUserId)) {
             $this->follows->unfollow($me, $targetUserId);
-            $_SESSION['flash'] = 'Takipten çıkarıldı.';
+            $this->setFlash('Takipten çıkarıldı.');
         } else {
             $this->follows->follow($me, $targetUserId);
-            $_SESSION['flash'] = 'Takip edildi.';
+            $this->setFlash('Takip edildi.');
         }
 
-        $this->redirectBack();
+        $this->redirectBack('/dashboard');
     }
 }

@@ -1,33 +1,41 @@
 ﻿<?php
+$flash  = $_SESSION['flash'] ?? null;
 $errors = $_SESSION['errors'] ?? [];
-$old = $_SESSION['old'] ?? [];
-unset($_SESSION['errors'], $_SESSION['old']);
+$old    = $_SESSION['old'] ?? [];
+unset($_SESSION['flash'], $_SESSION['errors'], $_SESSION['old']);
 
-// If coming from edit, $mode and $post will be set.
-$mode = $mode ?? 'create';
-$post = $post ?? null;
+// Edit modu mu, create modu mu?
+$isEdit  = isset($mode) && $mode === 'edit';
+$post    = $post ?? [];
 
-// Field values: prefer old input, then post, else empty.
-$titleValue = $old['title'] ?? ($post['title'] ?? '');
-$contentValue = $old['content'] ?? ($post['content'] ?? '');
+$title   = $old['title']   ?? ($post['title']   ?? '');
+$content = $old['content'] ?? ($post['content'] ?? '');
+$postId  = (int) ($post['id'] ?? 0);
 
-$flash = $_SESSION['flash'] ?? null;
-unset($_SESSION['flash']);
+$formAction = $isEdit
+    ? BASE_URL . '/posts/update?id=' . $postId
+    : BASE_URL . '/posts/store';
+
+$pageTitle  = $isEdit ? 'Edit Post' : 'Create Post';
 ?>
 <!doctype html>
 <html lang="tr">
-
 <head>
-  <meta charset="utf-8" />
-  <title>Create Post</title>
-  <link rel="stylesheet" href="/blog-app/public/assets/css/app.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/app.css') ?>">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><?= $pageTitle ?></title>
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app.css?v=<?= filemtime(__DIR__ . '/../../../public/assets/css/app.css') ?>">
 </head>
-
 <body class="post-create-page">
 
-  <main class="post-create-card">
+  <div class="post-create-card">
+
+    <h1 class="sr-only"><?= $pageTitle ?></h1>
+
     <?php if ($flash): ?>
-      <p class="post-create-message"><?= htmlspecialchars($flash, ENT_QUOTES, 'UTF-8') ?></p>
+      <div class="post-create-message">
+        <?= htmlspecialchars($flash, ENT_QUOTES, 'UTF-8') ?>
+      </div>
     <?php endif; ?>
 
     <?php if ($errors): ?>
@@ -38,40 +46,69 @@ unset($_SESSION['flash']);
       </ul>
     <?php endif; ?>
 
-    <!-- enctype required: otherwise image won't arrive -->
-    <form class="post-create-form" method="POST" action="<?= $mode === 'edit'
-                                                          ? '/blog-app/public/posts/update?id=' . (int)$post['id']
-                                                          : '/blog-app/public/posts/store'
-                                                        ?>" enctype="multipart/form-data">
+    <form class="post-create-form"
+          method="POST"
+          action="<?= $formAction ?>"
+          enctype="multipart/form-data">
 
-      <!-- Select an image -->
+      <input type="hidden" name="csrf_token"
+             value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+
+      <!-- Başlık -->
       <div class="post-create-field">
-        <label class="post-create-file-label" for="post-image">
-          <span>Select an image</span>
-          <span class="post-create-file-icon" aria-hidden="true"></span>
+        <input
+          class="post-create-input"
+          type="text"
+          name="title"
+          value="<?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?>"
+          placeholder="title"
+          required>
+      </div>
+
+      <!-- İçerik -->
+      <div class="post-create-field">
+        <textarea
+          class="post-create-textarea"
+          name="content"
+          placeholder="text"
+          required><?= htmlspecialchars($content, ENT_QUOTES, 'UTF-8') ?></textarea>
+      </div>
+
+      <!-- Görsel -->
+      <div class="post-create-field">
+        <input
+          type="file"
+          name="image"
+          id="postImage"
+          class="post-create-file-input"
+          accept="image/png,image/jpeg,image/webp">
+        <label class="post-create-file-label" for="postImage">
+          <span class="post-create-file-icon"></span>
+          <span class="post-create-file-text">
+            <?= $isEdit ? 'Change image (optional)' : 'Add image (optional)' ?>
+          </span>
         </label>
-        <input class="post-create-file-input" id="post-image" type="file" name="image" accept="image/png,image/jpeg,image/webp">
       </div>
 
-      <!-- header of the post -->
-      <div class="post-create-field">
-        <input class="post-create-input" name="title" placeholder="header of the post"
-          value="<?= htmlspecialchars($titleValue, ENT_QUOTES, 'UTF-8') ?>">
-      </div>
+      <?php if ($isEdit && !empty($post['image_path'])): ?>
+        <div class="post-create-current-image">
+          <img
+            src="<?= htmlspecialchars($post['image_path'], ENT_QUOTES, 'UTF-8') ?>"
+            alt="Current image"
+            style="max-width: 200px; border-radius: 8px;">
+          <p>Mevcut görsel — yeni seçersen değişir</p>
+        </div>
+      <?php endif; ?>
 
-      <!-- text of the post -->
-      <div class="post-create-field">
-        <textarea class="post-create-textarea" name="content" rows="8" placeholder="text of the post"><?= htmlspecialchars($contentValue, ENT_QUOTES, 'UTF-8') ?></textarea>
-      </div>
-
-      <!-- add post -->
       <button class="post-create-submit" type="submit">
-        <?= $mode === 'edit' ? 'update post' : 'add post' ?>
+        <?= $isEdit ? 'Update' : 'Publish' ?>
       </button>
 
     </form>
-  </main>
+
+    <a class="post-create-back" href="<?= BASE_URL ?>/dashboard">← back</a>
+
+  </div>
 
 </body>
-
 </html>
