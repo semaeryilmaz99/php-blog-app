@@ -33,7 +33,7 @@ class PostController extends Controller
         if ($title === '')   $errors[] = 'Başlık boş olamaz.';
         if ($content === '') $errors[] = 'Metin boş olamaz.';
 
-        $imagePath = $this->handleImageUpload('image', $errors);
+        $media = $this->handleMediaUpload('media', $errors);
 
         if ($errors) {
             $this->setErrors($errors);
@@ -48,7 +48,8 @@ class PostController extends Controller
             'title'      => $title,
             'slug'       => $slug,
             'content'    => $content,
-            'image_path' => $imagePath,
+            'image_path' => $media['path'] ?? null,
+            'media_type' => $media['media_type'] ?? null,
         ]);
 
         if (!$postId) {
@@ -116,12 +117,14 @@ class PostController extends Controller
 
         // Yeni resim yüklendiyse işle, yoksa eskiyi koru
         $imagePath = $existing['image_path'];
-        $newImage  = $this->handleImageUpload('image', $errors);
+        $newMedia = $this->handleMediaUpload('media', $errors);
 
-        if ($newImage !== null) {
-            // Eski resmi sil
-            $this->deleteFile($imagePath);
-            $imagePath = $newImage;
+        if ($newMedia !== null) {
+        $this->deleteFile($imagePath);
+        $imagePath  = $newMedia['path'];
+        $mediaType  = $newMedia['media_type'];
+        } else {
+        $mediaType = $existing['media_type'] ?? null;
         }
 
         if ($errors) {
@@ -135,6 +138,7 @@ class PostController extends Controller
             'title'      => $title,
             'content'    => $content,
             'image_path' => $imagePath,
+            'media_type' => $mediaType,
         ]);
 
         if (!$updated) {
@@ -188,50 +192,59 @@ class PostController extends Controller
 
     // ─── Private helpers ──────────────────────────────────────
 
-    /**
-     * Resim upload — başarılıysa path, dosya yoksa null, hata varsa errors'a ekler
-     */
-    private function handleImageUpload(string $field, array &$errors): ?string
-    {
-        if (empty($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
-            return null;
-        }
-
-        if ($_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
-            $errors[] = 'Resim yüklenirken hata oluştu.';
-            return null;
-        }
-
-        $maxBytes = 2 * 1024 * 1024;
-        if ($_FILES[$field]['size'] > $maxBytes) {
-            $errors[] = 'Resim 2MB\'dan büyük olamaz.';
-            return null;
-        }
-
-        $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-        $tmp     = $_FILES[$field]['tmp_name'];
-        $mime    = mime_content_type($tmp);
-
-        if (!isset($allowed[$mime])) {
-            $errors[] = 'Sadece JPG, PNG veya WEBP yükleyebilirsin.';
-            return null;
-        }
-
-        $ext      = $allowed[$mime];
-        $fileName = bin2hex(random_bytes(16)) . '.' . $ext;
-        $destDir  = __DIR__ . '/../../public/uploads/posts';
-
-        if (!is_dir($destDir)) {
-            mkdir($destDir, 0755, true);
-        }
-
-        if (!move_uploaded_file($tmp, $destDir . '/' . $fileName)) {
-            $errors[] = 'Resim kaydedilemedi.';
-            return null;
-        }
-
-        return BASE_URL . '/uploads/posts/' . $fileName;
+    private function handleMediaUpload(string $field, array &$errors): ?array
+{
+    if (empty($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
     }
+
+    if ($_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+        $errors[] = 'Dosya yüklenirken hata oluştu.';
+        return null;
+    }
+
+    $tmp  = $_FILES[$field]['tmp_name'];
+    $mime = mime_content_type($tmp);
+
+    $allowedImages = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    $allowedVideos = ['video/mp4' => 'mp4'];
+    $allowed       = array_merge($allowedImages, $allowedVideos);
+
+    if (!isset($allowed[$mime])) {
+        $errors[] = 'Sadece JPG, PNG, WEBP veya MP4 yükleyebilirsin.';
+        return null;
+    }
+
+    $isVideo  = isset($allowedVideos[$mime]);
+    $maxBytes = $isVideo ? 25 * 1024 * 1024 : 2 * 1024 * 1024;
+
+    if ($_FILES[$field]['size'] > $maxBytes) {
+        $errors[] = $isVideo
+            ? 'Video 25MB\'dan büyük olamaz.'
+            : 'Resim 2MB\'dan büyük olamaz.';
+        return null;
+    }
+
+    $ext     = $allowed[$mime];
+    $subDir  = $isVideo ? 'videos' : 'posts';
+    $destDir = __DIR__ . '/../../public/uploads/' . $subDir;
+
+    if (!is_dir($destDir)) {
+        mkdir($destDir, 0755, true);
+    }
+
+    $fileName = bin2hex(random_bytes(16)) . '.' . $ext;
+
+    if (!move_uploaded_file($tmp, $destDir . '/' . $fileName)) {
+        $errors[] = 'Dosya kaydedilemedi.';
+        return null;
+    }
+
+    return [
+        'path'       => BASE_URL . '/uploads/' . $subDir . '/' . $fileName,
+        'media_type' => $isVideo ? 'video' : 'image',
+    ];
+}
 
     /**
      * Fiziksel dosyayı sil

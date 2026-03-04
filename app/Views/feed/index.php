@@ -33,6 +33,7 @@ $posts = $posts ?? [];
   <aside class="sidebar" id="sidebar" aria-hidden="true">
     <nav class="sidebar__menu" aria-label="Sidebar menu">
       <a class="sidebar__item" href="<?= BASE_URL ?>/dashboard">dashboard</a>
+      <a class="sidebar__item" href="<?= BASE_URL ?>/dashboard">feed</a>
       <a class="sidebar__item" href="<?= BASE_URL ?>/posts/create">create post</a>
       <a class="sidebar__item" href="<?= BASE_URL ?>/userpage">user page</a>
     </nav>
@@ -83,56 +84,73 @@ $posts = $posts ?? [];
       <div class="posts-grid">
         <?php foreach ($posts as $p): ?>
           <article class="post-card">
-            <div class="post-card__header">
-              <div class="post-card__title">
-                <?= htmlspecialchars($p['title'], ENT_QUOTES, 'UTF-8') ?>
-              </div>
 
-              <div class="post-card__actions">
-                <?php if ((int) $p['user_id'] === (int) $_SESSION['user']['id']): ?>
-                  <form method="POST" action="<?= BASE_URL ?>/posts/delete"
-                    onsubmit="return confirm('Silinsin mi?')">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
-                    <input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
-                    <button class="icon-btn" type="submit" aria-label="Delete"></button>
-                  </form>
-                  <a class="icon-btn" href="<?= BASE_URL ?>/posts/edit?id=<?= (int) $p['id'] ?>" aria-label="Edit"></a>
-                <?php endif; ?>
+  <?php if (!empty($p['image_path'])): ?>
+  <?php if (($p['media_type'] ?? 'image') === 'video'): ?>
+    <video
+      class="post-card__video"
+      src="<?= htmlspecialchars($p['image_path'], ENT_QUOTES, 'UTF-8') ?>"
+      muted
+      loop
+      playsinline
+      preload="none">
+    </video>
+  <?php else: ?>
+    <img class="post-card__img"
+      src="<?= htmlspecialchars($p['image_path'], ENT_QUOTES, 'UTF-8') ?>"
+      alt="<?= htmlspecialchars($p['title'], ENT_QUOTES, 'UTF-8') ?>">
+  <?php endif; ?>
+<?php else: ?>
+  <div class="post-card__placeholder"></div>
+<?php endif; ?>
 
-                <form method="POST" action="<?= BASE_URL ?>/likes/toggle">
-                  <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
-                  <input type="hidden" name="post_id" value="<?= (int) $p['id'] ?>">
-                  <?php $isLiked = !empty($p['is_liked']); ?>
-                  <button class="icon-btn icon-btn--like <?= $isLiked ? 'is-liked' : '' ?>"
-                    type="submit" aria-label="Like">
-                    <span>(<?= (int) ($p['like_count'] ?? 0) ?>)</span>
-                  </button>
-                </form>
-              </div>
-            </div>
+  <div class="post-card__overlay"></div>
 
-            <!-- Yazar -->
-            <div class="post-card__author">
-              <?= htmlspecialchars($p['username'] ?? '', ENT_QUOTES, 'UTF-8') ?>
-            </div>
+  <?php if ((int) $p['user_id'] === (int) $_SESSION['user']['id']): ?>
+    <div class="post-card__actions">
+      <form method="POST" action="<?= BASE_URL ?>/posts/delete"
+        onsubmit="return confirm('Silinsin mi?')">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+        <input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
+        <button class="icon-btn" type="submit" aria-label="Delete"></button>
+      </form>
+      <a class="icon-btn" href="<?= BASE_URL ?>/posts/edit?id=<?= (int) $p['id'] ?>" aria-label="Edit"></a>
+    </div>
+  <?php endif; ?>
 
-            <!-- Görsel -->
-            <div class="post-card__media">
-              <?php if (!empty($p['image_path'])): ?>
-                <img class="post-card__img"
-                  src="<?= htmlspecialchars($p['image_path'], ENT_QUOTES, 'UTF-8') ?>"
-                  alt="<?= htmlspecialchars($p['title'], ENT_QUOTES, 'UTF-8') ?>">
-              <?php else: ?>
-                <div class="post-card__placeholder"></div>
-              <?php endif; ?>
-            </div>
+  <div class="post-card__info">
+    <div class="post-card__title">
+      <?= htmlspecialchars($p['title'], ENT_QUOTES, 'UTF-8') ?>
+    </div>
 
-            <!-- Tarih -->
-            <div class="post-card__date">
-              <?= htmlspecialchars(date('d.m.Y', strtotime($p['created_at'])), ENT_QUOTES, 'UTF-8') ?>
-            </div>
+    <div class="post-card__meta">
+      <?php
+      $profileUrl = ((int) $p['user_id'] === $viewerId)
+      ? BASE_URL . '/userpage'
+      : BASE_URL . '/users/show?id=' . (int) $p['user_id'];
+      ?>
+      <a class="post-card__author-date"
+      href="<?= BASE_URL ?>/users/show?id=<?= (int) $p['user_id'] ?>">
+      @<?= htmlspecialchars($p['username'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+      · <?= date('d.m.Y', strtotime($p['created_at'])) ?>
+      </a>
 
-          </article>
+      <form method="POST" action="<?= BASE_URL ?>/likes/toggle">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+        <input type="hidden" name="post_id" value="<?= (int) $p['id'] ?>">
+        <?php
+        $isLiked   = !empty($p['is_liked']);
+        $likeCount = (int) ($p['like_count'] ?? 0);
+        ?>
+        <button class="post-card__like <?= $isLiked ? 'is-liked' : '' ?>"
+          type="submit" aria-label="Like">
+          <?= $isLiked ? '♥' : '♡' ?> <?= $likeCount ?>
+        </button>
+      </form>
+    </div>
+  </div>
+
+</article>
         <?php endforeach; ?>
       </div>
     <?php endif; ?>

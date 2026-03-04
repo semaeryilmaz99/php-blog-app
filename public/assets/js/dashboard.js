@@ -79,4 +79,16 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// Video hover autoplay
+document.querySelectorAll('.post-card').forEach(card => {
+const video = card.querySelector('.post-card__video');
+if (!video) return;
+
+card.addEventListener('mouseenter', () => video.play());
+card.addEventListener('mouseleave', () => {
+    video.pause();
+    video.currentTime = 0;
+});
+});
+
 })();

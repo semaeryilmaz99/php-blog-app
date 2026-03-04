@@ -155,74 +155,196 @@
 
   .posts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 36px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
   }
 
   .post-card {
-    background: #d6c2c3;
-    border-radius: 16px;
-    padding: 12px;
-    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.12);
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+    background: v.$dark-pink;
+    aspect-ratio: 3 / 4;
+    cursor: pointer;
+    transition: transform 200ms ease, box-shadow 200ms ease;
+
+    &:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+    }
   }
 
-  .post-card__header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  .post-card__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 300ms ease;
+
+    .post-card:hover & {
+      transform: scale(1.04);
+    }
   }
 
-  .post-card__title {
-    flex: 1;
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: #ffffff;
-    font-size: 12px;
-    text-align: center;
-    text-transform: lowercase;
+  .post-card__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 300ms ease;
+
+  .post-card:hover & {
+    transform: scale(1.04);
+  }
+}
+
+  .post-card__placeholder {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, v.$dark-pink 0%, v.$dark-primary 100%);
+  }
+
+  .post-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 30%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
   }
 
   .post-card__actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 200ms ease, transform 200ms ease;
+
+    .post-card:hover & {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .post-card__info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px 14px 12px;
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
 
+  .post-card__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    text-transform: lowercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .post-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .post-card__author-date {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: lowercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;        // ← ekle
+  transition: color 150ms ease; // ← ekle
+
+  &:hover {
+    color: rgba(255, 255, 255, 1); // ← ekle
+  }
+  }
+
+  .post-card__like {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 999px;
+    padding: 4px 10px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 150ms ease, transform 120ms ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.28);
+      transform: scale(1.05);
+    }
+
+    &.is-liked {
+      background: rgba(220, 80, 80, 0.55);
+      color: #ffffff;
+    }
+  }
+
   .icon-btn {
     position: relative;
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
     border: none;
     border-radius: 50%;
-    background: #5b5353;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(4px);
     color: transparent;
     cursor: pointer;
     overflow: hidden;
+    transition: background 150ms ease, transform 120ms ease;
+
+    &:hover {
+      background: #ffffff;
+      transform: scale(1.1);
+    }
   }
 
   .icon-btn[aria-label="Delete"]::before,
   .icon-btn[aria-label="Delete"]::after {
     content: "";
     position: absolute;
-    background: #ffffff;
+    background: #5b5353;
   }
 
   .icon-btn[aria-label="Delete"]::before {
     width: 10px;
     height: 8px;
-    border: 2px solid #ffffff;
+    border: 2px solid #5b5353;
     border-top: none;
     border-radius: 2px;
     top: 9px;
-    left: 7px;
+    left: 10px;
     background: transparent;
   }
 
   .icon-btn[aria-label="Delete"]::after {
     width: 12px;
     height: 3px;
-    top: 6px;
-    left: 7px;
+    top: 7px;
+    left: 9px;
     border-radius: 2px;
   }
 
@@ -230,14 +352,14 @@
   .icon-btn[aria-label="Edit"]::after {
     content: "";
     position: absolute;
-    background: #ffffff;
+    background: #5b5353;
   }
 
   .icon-btn[aria-label="Edit"]::before {
     width: 12px;
     height: 3px;
-    top: 12px;
-    left: 7px;
+    top: 14px;
+    left: 9px;
     transform: rotate(-45deg);
     border-radius: 2px;
   }
@@ -245,26 +367,13 @@
   .icon-btn[aria-label="Edit"]::after {
     width: 4px;
     height: 4px;
-    top: 8px;
-    left: 15px;
+    top: 9px;
+    left: 17px;
     transform: rotate(-45deg);
-    border: 2px solid #ffffff;
+    border: 2px solid #5b5353;
     border-left: none;
     border-bottom: none;
     background: transparent;
-  }
-
-  .post-card__media {
-    margin-top: 12px;
-  }
-
-  .post-card__placeholder,
-  .post-card__img {
-    width: 100%;
-    height: 160px;
-    border-radius: 12px;
-    background: #d9d9d9;
-    object-fit: cover;
   }
 
   .fab {
@@ -280,6 +389,115 @@
     font-size: 46px;
     color: #5b5353;
     box-shadow: 0 16px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .user-profile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 32px 0 24px;
+  }
+
+  .user-profile__avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: v.$dark-primary;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    span {
+      font-size: 42px;
+      font-weight: 600;
+      color: v.$text-dark-color;
+    }
+  }
+
+  .user-profile__info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .user-profile__username {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: lowercase;
+  }
+
+  .user-profile__bio {
+    font-size: 13px;
+    color: #666;
+    max-width: 400px;
+    line-height: 1.5;
+  }
+
+  .user-profile__stats {
+    display: flex;
+    gap: 24px;
+  }
+
+  .user-profile__stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+
+    strong {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    span {
+      font-size: 11px;
+      text-transform: lowercase;
+      color: #888;
+      letter-spacing: 0.3px;
+    }
+  }
+
+  .user-profile__follow-btn {
+    align-self: flex-start;
+    padding: 8px 24px;
+    border: none;
+    border-radius: 999px;
+    background: v.$dark-primary;
+    color: v.$text-dark-color;
+    font-size: 12px;
+    text-transform: lowercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 120ms ease, background 120ms ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      background: v.$dark-pink;
+    }
+
+    &.is-following {
+      background: v.$light-grey;
+
+      &:hover {
+        background: v.$dark-pink;
+      }
+    }
+  }
+
+  .user-profile__divider {
+    border: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    margin: 0 0 28px;
   }
 
   // Mevcut .fab stilinin hemen altına ekle, @media'dan önce:

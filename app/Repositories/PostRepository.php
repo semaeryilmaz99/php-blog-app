@@ -21,8 +21,8 @@ class PostRepository
     public function create(array $data): int
 {
     $stmt = $this->db->prepare(
-        "INSERT INTO posts (user_id, title, slug, content, image_path)
-        VALUES (:user_id, :title, :slug, :content, :image_path)"
+        "INSERT INTO posts (user_id, title, slug, content, image_path, media_type)
+        VALUES (:user_id, :title, :slug, :content, :image_path, :media_type)"
     );
 
     $stmt->execute([
@@ -31,6 +31,7 @@ class PostRepository
         'slug'       => $data['slug'],
         'content'    => $data['content'],
         'image_path' => $data['image_path'] ?? null,
+        'media_type' => $data['media_type'] ?? null,
     ]);
 
     return (int) $this->db->lastInsertId();
@@ -64,13 +65,14 @@ class PostRepository
 {
     $stmt = $this->db->prepare(
         "UPDATE posts
-        SET title = :title, content = :content, image_path = :image_path
+        SET title = :title, content = :content, image_path = :image_path, media_type = :media_type
         WHERE id = :id AND user_id = :user_id"
     );
     $stmt->execute([
         'title'      => $data['title'],
         'content'    => $data['content'],
         'image_path' => $data['image_path'],
+        'media_type' => $data['media_type'] ?? null,
         'id'         => $postId,
         'user_id'    => $userId,
     ]);
@@ -197,7 +199,7 @@ class PostRepository
 
         $sql = "
         SELECT
-            p.id, p.user_id, p.title, p.content, p.image_path, p.created_at,
+            p.id, p.user_id, p.title, p.content, p.image_path, p.media_type, p.created_at,
             u.username, u.avatar_path,
 
             (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,

@@ -77,17 +77,17 @@ $pageTitle  = $isEdit ? 'Edit Post' : 'Create Post';
       <!-- Görsel -->
       <div class="post-create-field">
         <input
-          type="file"
-          name="image"
-          id="postImage"
-          class="post-create-file-input"
-          accept="image/png,image/jpeg,image/webp">
-        <label class="post-create-file-label" for="postImage">
-          <span class="post-create-file-icon"></span>
-          <span class="post-create-file-text">
-            <?= $isEdit ? 'Change image (optional)' : 'Add image (optional)' ?>
-          </span>
-        </label>
+  type="file"
+  name="media"
+  id="postMedia"
+  class="post-create-file-input"
+  accept="image/png,image/jpeg,image/webp,video/mp4">
+<label class="post-create-file-label" for="postMedia">
+  <span class="post-create-file-icon"></span>
+  <span class="post-create-file-text" id="postMediaLabel">
+    <?= $isEdit ? 'Change image / video (optional)' : 'Add image / video (optional)' ?>
+  </span>
+</label>
       </div>
 
       <?php if ($isEdit && !empty($post['image_path'])): ?>
@@ -110,5 +110,11 @@ $pageTitle  = $isEdit ? 'Edit Post' : 'Create Post';
 
   </div>
 
+  <script>
+document.getElementById('postMedia').addEventListener('change', function() {
+  const label = document.getElementById('postMediaLabel');
+  label.textContent = this.files[0] ? this.files[0].name : 'Add image / video (optional)';
+});
+</script>
 </body>
 </html>
